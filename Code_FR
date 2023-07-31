@@ -1,0 +1,287 @@
+#### FR: Anna
+
+
+df = read_xlsx('final FR data.xlsx')
+head(df)
+table(df$Species)
+table(df$Temperature)
+table(df$Prey)
+
+str(df)
+
+
+df$`Prey eaten` = as.numeric(df$`Prey eaten`)
+df$`Prey bitten` = as.numeric(df$`Prey bitten`)
+df$Prey = as.numeric(df$Prey)
+
+df$Total_eaten = df$`Prey eaten` + df$`Prey bitten`
+
+names(df)
+
+df= df[,-c(10:18)]
+
+
+suppressMessages({
+  library(dplyr, quiet = TRUE, warn.conflicts = FALSE)
+  library(reshape, quiet = TRUE, warn.conflicts = FALSE)
+  library(ggplot2)
+  library(stringr)
+  library(tidyr)  
+  library(stringr)
+  library(readxl)
+  library(frair)
+  library(patchwork)
+  library(glmmTMB)
+})
+
+str(df)
+
+
+df$Species <- as.factor(df$Species)
+df$Sex <- as.factor(df$Sex)
+df$Temperature <- as.factor(df$Temperature)
+df$Seed <- as.factor(df$Seed)
+
+
+
+table(df$Sex)
+table(df$Temperature)
+
+ggplot(df, aes(x = Temperature, y = Total_eaten, fill = Seed)) +
+  geom_boxplot() +
+  facet_wrap(~Prey, scales = "free") +
+  labs(x = "Temperature", 
+       y = "Number of eaten and bitten seeds",
+       fill = "Type of seed",
+       title = "Comparison of number of bitten and/or completely eaten seeds (millet vs wheat) by temperature (Phillip)",
+       subtitle = "Broken down by the number of available seeds") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+#Also by species
+ggplot(df, aes(x = Temperature, y = Total_eaten, fill = Seed)) +
+  geom_boxplot() +
+  facet_grid(Species~Prey, scales = "free") +
+  labs(x = "Temperature", 
+       y = "Number of eaten and bitten seeds",
+       fill = "Type of seed",
+       title = "Comparison of number of bitten and/or completely eaten seeds (millet vs wheat) by temperature",
+       subtitle = "Broken down by the number of available seeds and species") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+
+#just in case...
+library(dplyr)
+library(purrr)
+library(frair)
+
+str(df)
+
+df %>%
+  summarise_at(vars(Total_eaten, Prey), 
+               list(~sum(is.na(.))))
+
+df_clean <- df %>%
+  filter(!is.na(Total_eaten))
+
+str(df_clean)
+
+df_clean <- df_clean %>%
+  mutate(Proportion_eaten = Total_eaten / Prey)
+
+
+results <- df_clean %>%
+  group_by(Species, Temperature, Seed, Sex) %>%
+  nest() %>%
+ mutate(test = map(data, ~ frair_test(Total_eaten ~ Prey, data = .x))) 
+
+
+results$test[[8]]
+vector <- c(rep("YES", 7), "NULL", rep("YES", 4))
+
+results$Evidence_Type_II = vector
+# Note tha the row 8 is giving some problems
+
+
+######################################################
+
+results= results %>% filter(Evidence_Type_II=='YES')
+results= results[,-c(6,7)]
+
+res_list <- list()
+
+for (i in 1:nrow(results)) {
+  results1 = results[i,]
+  results2 = results1$data %>% as.data.frame()
+  
+  z =  frair_fit(formula = Total_eaten ~ Prey, data = results2,
+                 response = "rogersII",
+                 start = list(a = 1, h = 0.1),
+                 fixed = list(T = 1)) 
+  
+  assign(paste("Fit", i, sep="_"), z)
+  
+  res = z[["coefficients"]] %>% as.data.frame()
+  
+  res$FitID <- paste("Fit", i, sep="_")
+  
+  # Add the additional information
+  res$Species <- results1$Species[1]    
+  res$Sex <- results1$Sex[1]            
+  res$Temperature <- results1$Temperature[1]    
+  res$Seed <- results1$Seed[1]   
+  res$Terms = c('a', 'h','T')
+  
+  res_list[[i]] <- res
+}
+
+
+df_res <- do.call(rbind, res_list)
+
+
+
+
+
+
+####### More loops to the BOOTSTRAPPING)
+
+result_list <- list()
+
+for(i in 1:11) {
+ 
+  fit <- get(paste("Fit", i, sep="_"))
+  
+ 
+  result <- frair_boot(fit)
+  confint(result , citypes ='bca')
+  
+  assign(paste("Fit_boot", i, sep="_"), result)
+  
+  
+  result_list[[i]] <- result
+  cat('We hate Paride ==', i, '\n')
+}
+
+# example
+result_list[[6]]
+
+
+
+########### PLOTS ####################
+
+#Note: add the code as you wish
+
+#Species A with all temps 
+range(df_clean$Prey)
+range(df_clean$Total_eaten)
+
+plot(x = 1,
+     type = "n",
+     xlim = c(0, 40), 
+     ylim = c(0, 40),
+     font.lab = 2,  
+     mgp = c(2.5,1,0),
+     cex.axis = 1.5,  
+     cex.lab = 1.5,
+     xlab="Prey Density", ylab="No. of seed eaten")
+
+color1 <- col2rgb("red")
+color2 <- col2rgb("orange")
+color3 <- col2rgb("yellow")
+
+# Create new colors with alpha
+color_alpha1 <- rgb(color1[1]/255, color1[2]/255, color1[3]/255, alpha=0.5)
+color_alpha2 <- rgb(color2[1]/255, color2[2]/255, color2[3]/255, alpha=0.5)
+color_alpha3 <- rgb(color3[1]/255, color3[2]/255, color3[3]/255, alpha=0.5)
+
+
+drawpoly(Fit_boot_1, col=color_alpha3, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_3, col=color_alpha2, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_5, col=color_alpha1, border=NA, tozero=TRUE)
+
+text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
+     labels = "Female Acheta domesticus - wheat", adj = c(1, 1), cex = 1.5, font = 3)
+
+text(x = 20.5, y = 6, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 20.5, y = 10, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 20.5, y = 15.4, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+
+
+
+
+
+plot(x = 1,
+     type = "n",
+     xlim = c(0, 40), 
+     ylim = c(0, 40),
+     font.lab = 2,  
+     mgp = c(2.5,1,0),
+     cex.axis = 1.5,  
+     cex.lab = 1.5,
+     xlab="Prey Density", ylab="No. of seed eaten")
+
+
+
+drawpoly(Fit_boot_2, col=color_alpha3, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_4, col=color_alpha2, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_6, col=color_alpha1, border=NA, tozero=TRUE)
+
+text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
+     labels = "Female Acheta domesticus - millet", adj = c(1, 1), cex = 1.5, font = 3)
+
+text(x = 35, y = 33, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 27, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 22.2, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+
+
+
+
+
+plot(x = 1,
+     type = "n",
+     xlim = c(0, 40), 
+     ylim = c(0, 40),
+     font.lab = 2,  
+     mgp = c(2.5,1,0),
+     cex.axis = 1.5,  
+     cex.lab = 1.5,
+     xlab="Prey Density", ylab="No. of seed eaten")
+
+
+drawpoly(Fit_boot_7, col=color_alpha3, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_8, col=color_alpha1, border=NA, tozero=TRUE)
+
+text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
+     labels = "Male Acheta domesticus - millet", adj = c(1, 1), cex = 1.5, font = 3)
+
+text(x = 20.5, y = 15, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 20.5, y = 17.7, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+
+
+
+
+
+plot(x = 1,
+     type = "n",
+     xlim = c(0, 40), 
+     ylim = c(0, 40),
+     font.lab = 2,  
+     mgp = c(2.5,1,0),
+     cex.axis = 1.5,  
+     cex.lab = 1.5,
+     xlab="Prey Density", ylab="No. of seed eaten")
+
+
+drawpoly(Fit_boot_9, col=color_alpha3, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_10, col=color_alpha2, border=NA, tozero=TRUE)
+drawpoly(Fit_boot_11, col=color_alpha1, border=NA, tozero=TRUE)
+
+text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
+     labels = "Female Gryllus bimaculatus - millet", adj = c(1, 1), cex = 1.5, font = 3)
+
+text(x = 35, y = 22, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 26, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 30, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+
