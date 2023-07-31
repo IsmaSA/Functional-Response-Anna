@@ -231,11 +231,10 @@ drawpoly(Fit_boot_6, col=color_alpha1, border=NA, tozero=TRUE)
 text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
      labels = "Female Acheta domesticus - millet", adj = c(1, 1), cex = 1.5, font = 3)
 
-text(x = 35, y = 33, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+
+text(x = 35, y = 22.2, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
 text(x = 35, y = 27, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
-text(x = 35, y = 22.2, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
-
-
+text(x = 35, y = 33, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
 
 
 
@@ -397,7 +396,7 @@ results <- df_clean %>%
   mutate(test = map(data, ~ frair_test(`Prey eaten` ~ Prey, data = .x))) 
 
 
-results$test[[12]]
+results$test[[8]]
 vector <- c("NULL", rep("YES", 11))
 
 results$Evidence_Type_II = vector
@@ -414,7 +413,7 @@ res_list <- list()
 for (i in 1:nrow(results)) {
   results1 = results[i,]
   results2 = results1$data %>% as.data.frame()
-  
+
   z =  frair_fit(formula = Prey.eaten ~ Prey, data = results2,
                  response = "rogersII",
                  start = list(a = 1, h = 0.1),
@@ -464,7 +463,7 @@ for(i in 1:11) {
 }
 
 # example
-result_list[[6]]
+result_list[[2]]
 
 
 
@@ -580,8 +579,12 @@ drawpoly(Fit_boot_11, col=color_alpha1, border=NA, tozero=TRUE)
 text(x = max(par("usr")[1:2]), y = max(par("usr")[3:4]), 
      labels = "Female Gryllus bimaculatus - millet", adj = c(1, 1), cex = 1.5, font = 3)
 
-text(x = 35, y = 22, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
-text(x = 35, y = 26, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
-text(x = 35, y = 30, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 7.5, labels = "Temperature: 20°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 10.7, labels = "Temperature: 25°C", adj = c(0, 1), cex = 0.8, font = 2)
+text(x = 35, y = 17, labels = "Temperature: 30°C", adj = c(0, 1), cex = 0.8, font = 2)
+
+legend(0, 40, legend=c("Temperature: 20°C", "Temperature: 25°C","Temperature: 30°C"),
+       col=c(color_alpha3, color_alpha2,color_alpha1), lty=1:2, cex=1.2)
+
 
 
