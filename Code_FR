@@ -733,3 +733,47 @@ points(x = b$Prey, y = b$Total_eaten, pch="x", cex=0.9, col = 'purple')
 legend(0, 40, legend=c("Acheta domesticus", "Gryllus bimaculatus"),
        col=c('green', 'purple'), lty=1:3, cex=1.2, lwd=2)
 
+
+############## Mortality plot ##########
+
+df1 <- read_xlsx("Mortality data (G&A)(2).xlsx")
+
+library(dplyr)
+library(pscl)
+
+df1$Species <- as.factor(df1$Species)
+df1$Temp <- as.factor(gsub("°C", "", df1$Temp))
+
+extract_counts <- function(str) {
+  counts <- as.numeric(gsub("\"|/.*", "", str))
+  replicates <- as.numeric(gsub(".*?/", "", gsub("\"", "", str)))
+  return(list(counts = counts, replicates = replicates))
+}
+df1 <- df1 %>%
+  mutate(Dead_Acheta = sapply(`Dead Acheta/Replicates`, function(x) extract_counts(x)$counts),
+         Replicates_Acheta = sapply(`Dead Acheta/Replicates`, function(x) extract_counts(x)$replicates),
+         Dead_Gryllus = sapply(`Dead Gryllus/Replicates`, function(x) extract_counts(x)$counts),
+         Replicates_Gryllus = sapply(`Dead Gryllus/Replicates`, function(x) extract_counts(x)$replicates))
+
+df1 <- df1 %>%
+  mutate(Mortality_Acheta = Dead_Acheta / Replicates_Acheta,
+         Mortality_Gryllus = Dead_Gryllus / Replicates_Gryllus)
+
+mortality_summary <- df1 %>%
+  group_by(Species, Temp) %>%
+  summarize(Mean_Mortality = mean(Mortality_Gryllus, na.rm = TRUE),
+            SE = sd(Mortality_Gryllus, na.rm = TRUE) / sqrt(n())) %>%
+  ungroup()
+
+ggplot(mortality_summary, aes(x = Species, y = Mean_Mortality, fill = Temp)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = Mean_Mortality - SE, ymax = Mean_Mortality + SE), 
+                position = position_dodge(0.9), width = 0.25) +
+  theme_bw() +
+  theme(axis.text.x = element_text(face = "italic")) +
+  labs(x = "Species",
+       y = "Mean mortality rate (± SE)",
+       fill = "Temperature") +
+  scale_fill_brewer(palette = "Set1") +
+  theme(axis.text = element_text(size=12),
+        axis.title = element_text(size=14))
