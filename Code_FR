@@ -43,7 +43,29 @@ df$Temperature <- as.factor(df$Temperature)
 df$Seed <- as.factor(df$Seed)
 
 
+df$Species <- as.factor(df$Species)
+df$Sex <- as.factor(df$Sex)
+df$Temperature <- as.factor(df$Temperature)
+df$Seed <- as.factor(df$Seed)
 
+
+df$Temperature <- as.factor(gsub("°C", "", df$Temperature))
+df<- df %>% filter(!Seed =="control")
+# Create a new column for total damaged seeds
+df$Damaged_Seeds <- (df$`Prey eaten` + df$`Prey [bitten]`)
+df$Undamaged_Seeds <- df$Prey - df$Damaged_Seeds
+
+#df <- df %>% filter(Species =="Acheta & Gryllus")
+response_matrix <- cbind(df$Damaged_Seeds, df$Undamaged_Seeds)
+
+# Fit the GLM model
+model <- glm(response_matrix  ~ Species * Temperature + Prey, family = binomial, data = df)
+
+# Check the summary of the model
+summary(model)
+
+# Perform ANOVA to test for significance of interaction
+anova(model, test="Chisq")
 table(df$Sex)
 table(df$Temperature)
 
