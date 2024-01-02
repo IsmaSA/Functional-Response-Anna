@@ -1,3 +1,5 @@
+<img align="right" src="plots/plot.jpg" width="150" style="margin-top: 40px">
+
 ## Assessing the potential phytosanitary threat of the house cricket Acheta domesticus
 
 Anna K. Kulessa1,2,3,a, Paride Balzani3, Ismael Soto3, Mathieu Toutain3,4, Phillip J. Haubrock3,5,6,b, Antonín Kouba3,b
