@@ -1,4 +1,4 @@
-<img align="right" src="plot/acheta.jpg" width="150" style="margin-top: 40px">
+<img align="right" src="plot/acheta.jpeg" width="150" style="margin-top: 40px">
 
 ## Assessing the potential phytosanitary threat of the house cricket Acheta domesticus
 
