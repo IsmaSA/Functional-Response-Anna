@@ -2,7 +2,7 @@
 
 ## Assessing the potential phytosanitary threat of the house cricket Acheta domesticus
 
-Anna K. Kulessa1, Paride Balzani, Ismael Soto, Mathieu Toutain, Phillip J. Haubrock, Antonín Kouba
+Anna K. Kulessa, Paride Balzani, Ismael Soto, Mathieu Toutain, Phillip J. Haubrock, Antonín Kouba
 
 1) Ruhr University Bochum, Faculty of Biology and Biotechnology, 44801 Bochum, Germany
 2) University of Duisburg-Essen, Faculty of Biology, 45141 Essen, Germany
